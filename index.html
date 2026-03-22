@@ -184,6 +184,8 @@
         <h1 style="font-family: 'MineSweeperFont', Arial, sans-serif; font-size: 2rem; text-align: center; margin: 0 0 10px 0; color: var(--cell-dark); ">Minesweeper Chess</h1>
     </div>
 
+    <!-- <a href="https://github.com/ssambender/minesweeper-chess-frontend"><img src="gh-logo.png" width="48px" height="48px" style="position: absolute; top: 12px; right: 12px;"></a> -->
+
     <div id="lobby-overlay">
         <h2>Select Your Team</h2>
         <button id="btn-white" class="btn-styled">Play as WHITE</button>
@@ -222,7 +224,9 @@
     </div>
     <div id="toggle-dark" style="margin-top: 24px; padding: 4px; cursor: pointer;">Use Dark Mode</div>
 
-    <footer style="position: absolute; bottom: 1rem; font-family: Arial, sans-serif; font-size: 1rem;"><a href="https://sambender.net" target="_blank">Sam Bender 2026</a></footer>
+    <footer style="position: absolute; bottom: 1rem; font-family: Arial, sans-serif; font-size: 1rem;"><a href="https://sambender.net" target="_blank">Sam Bender 2026</a>
+        <span style="color: var(--cell-light); padding: 0 4px;">•</span>
+        <a href="https://github.com/ssambender/minesweeper-chess-frontend" target="_blank">View on GitHub</a></footer>
 
     <script>
         const toggleButton = document.getElementById('toggle-dark');
@@ -268,7 +272,7 @@
                 document.documentElement.style.setProperty('--cover-light', '#fcefd3');
                 document.documentElement.style.setProperty('--cover-dark', '#b2987a');
             } else if (theme === 'green') {
-                document.documentElement.style.setProperty('--cell-light', '#dfe0b8');
+                document.documentElement.style.setProperty('--cell-light', '#d1e0a8');
                 document.documentElement.style.setProperty('--cell-dark', '#8eae6a');
                 document.documentElement.style.setProperty('--cover-light', '#feffd0');
                 document.documentElement.style.setProperty('--cover-dark', '#769652');
