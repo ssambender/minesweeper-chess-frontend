@@ -160,7 +160,7 @@
         .valid-move-dot { position: absolute; width: 16px; height: 16px; background-color: rgba(0, 0, 0, 0.25); border-radius: 50%; z-index: 3; pointer-events: none; }
         .valid-capture-ring { position: absolute; width: 44px; height: 44px; border: 6px solid rgba(0, 0, 0, 0.25); border-radius: 50%; box-sizing: border-box; z-index: 3; pointer-events: none; }
         
-        .number { font-family: 'MineSweeperFont', Arial, sans-serif; font-size: 20px; font-weight: bold; position: absolute; z-index: 1; pointer-events: none; }
+        .number { font-family: 'MineSweeperFont', Arial, sans-serif; font-size: 20px; font-weight: bold; position: absolute; z-index: 1; pointer-events: none; user-select: none; -webkit-user-select: none; }
         .number.corner { top: 2px; left: 4px; font-size: 14px; }
         
         .c-1 { color: #0100FF; } .c-2 { color: #057D08; } .c-3 { color: #FF0006; } .c-4 { color: #7F027C; }
@@ -173,10 +173,21 @@
         }
         footer a:hover {
             color: var(--cell-dark);
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
+
+    <!-- 
+    
+    todo:
+    - dont let chess piece be moved to a revealed bomb square
+    - dont let numbers be highlighted/user selected
+    - add message on homescreen showing server is down and connecting
+    - optimize better for mobile
+    
+    -->
 
     <div id="custom-popup"></div>
 
@@ -187,15 +198,18 @@
     <!-- <a href="https://github.com/ssambender/minesweeper-chess-frontend"><img src="gh-logo.png" width="48px" height="48px" style="position: absolute; top: 12px; right: 12px;"></a> -->
 
     <div id="lobby-overlay">
-        <h2>Select Your Team</h2>
-        <button id="btn-white" class="btn-styled">Play as WHITE</button>
-        <button id="btn-black" class="btn-styled">Play as BLACK</button>
+        <h2 style="color: #656565;">Select Your Team</h2>
+        <div id="connection-status" style="margin-bottom: 20px; color: #d38e70; font-weight: bold; animation: pulse-fade 2s infinite ease;">Connecting to server...</div>
+        <div id="lobby-game-status" style="margin-bottom: 20px; color: #656565; font-weight: bold; display: none;"></div>
+        
+        <button id="btn-white" class="btn-styled" disabled>Play as WHITE</button>
+        <button id="btn-black" class="btn-styled" disabled>Play as BLACK</button>
     </div>
 
     <div id="game-container">
         
         <div id="game-header">
-            <div id="timer">10:00</div>
+            <div id="timer">20:00</div>
             <div id="info">Connecting...</div>
             <button id="btn-end-game" class="btn-styled" style="padding: 10px 20px; font-size: 1rem; margin: 0;">End Game</button>
         </div>
@@ -224,9 +238,11 @@
     </div>
     <div id="toggle-dark" style="margin-top: 24px; padding: 4px; cursor: pointer;">Use Dark Mode</div>
 
-    <footer style="position: absolute; bottom: 1rem; font-family: Arial, sans-serif; font-size: 1rem;"><a href="https://sambender.net" target="_blank">Sam Bender 2026</a>
-        <span style="color: var(--cell-light); padding: 0 4px;">•</span>
-        <a href="https://github.com/ssambender/minesweeper-chess-frontend" target="_blank">View on GitHub</a></footer>
+    <footer style="position: absolute; bottom: 1rem; font-family: Arial, sans-serif; font-size: 1rem; cursor: default;">
+        <a href="https://sambender.net" target="_blank" style="cursor: pointer;">Sam Bender 2026</a>
+        <span style="color: var(--cell-light); padding: 0 4px; cursor: default;">•</span>
+        <a href="https://github.com/ssambender/minesweeper-chess-frontend" target="_blank" style="cursor: pointer;">View on GitHub</a>
+    </footer>
 
     <script>
         const toggleButton = document.getElementById('toggle-dark');
@@ -319,12 +335,23 @@
         const timerEl = document.getElementById('timer');
         
         const ws = new WebSocket('wss://fashionable-cordy-sambender-1b0d434f.koyeb.app/');
+        const connectionStatusEl = document.getElementById('connection-status');
+
+        ws.onopen = function() {
+            connectionStatusEl.innerText = 'Server Online';
+            connectionStatusEl.style.color = '#4e8803';
+            connectionStatusEl.style.animation = 'none';
+        };
 
         // connection error hgandling
         ws.onerror = function(error) {
-            showPopup("Server is not currently running.", 0); // 0 prevents it from fading out
+            showPopup("Server is not currently running.", 0); 
             
-            // disable lobby buttons and change text
+            // Update Lobby Status
+            connectionStatusEl.innerText = 'Server Offline';
+            connectionStatusEl.style.color = '#F70000';
+            connectionStatusEl.style.animation = 'none';
+
             const btnWhite = document.getElementById('btn-white');
             const btnBlack = document.getElementById('btn-black');
             btnWhite.disabled = true;
@@ -346,6 +373,7 @@
         let isGameOver = false;
         let inLobby = true;
         let gameStarted = false;
+        let currentGrid = null;
 
         const pieceIcons = {
             'white': { 'K': '♔', 'Q': '♕', 'R': '♖', 'B': '♗', 'N': '♘', 'P': '♙' },
@@ -376,7 +404,21 @@
         function updateTimerDisplay(timeSeconds) {
             const m = Math.floor(timeSeconds / 60).toString().padStart(2, '0');
             const s = (timeSeconds % 60).toString().padStart(2, '0');
-            timerEl.innerText = `${m}:${s}`;
+            const timeString = `${m}:${s}`;
+            
+            // update the main game timer
+            timerEl.innerText = timeString;
+
+            // updates the lobby status if game is running
+            const lobbyStatus = document.getElementById('lobby-game-status');
+            if (lobbyStatus) {
+                if (inLobby && gameStarted && !isGameOver) {
+                    lobbyStatus.style.display = 'block';
+                    lobbyStatus.innerText = `Current game already in progress, ${timeString} remaining`;
+                } else if (!gameStarted) {
+                    lobbyStatus.style.display = 'none';
+                }
+            }
         }
 
         ws.onmessage = (event) => {
@@ -420,13 +462,20 @@
                 infoEl.innerText = data.winner === 'draw' ? 'TIME UP! IT\'S A DRAW!' : `GAME OVER! ${data.winner.toUpperCase()} WINS!`;
                 infoEl.style.color = '#F70000';
                 infoEl.style.fontWeight = 'bold';
-                showPopup(`Game Over!\nReason: ${data.reason}`, 6000); 
+                showPopup(`Game Over!\nReason: ${data.reason}`, 12000); 
+
+                if (inLobby) {
+                    const lobbyStatus = document.getElementById('lobby-game-status');
+                    lobbyStatus.innerText = 'Game Over! Waiting for players to reset...';
+                }
+
                 return;
             }
 
             if (data.type === 'STATE_UPDATE') {
                 currentTurn = data.turn;
                 gameStarted = data.gameStarted;
+                currentGrid = data.grid;
                 
                 if (data.timeRemaining !== undefined) {
                     updateTimerDisplay(data.timeRemaining);
@@ -474,6 +523,8 @@
         function handleCellClick(x, y) {
             if (isGameOver || inLobby || !gameStarted) return;
             if (selectedPiece && currentTurn === myColor) {
+                if (currentGrid && currentGrid[y][x] === 'X') return;
+
                 ws.send(JSON.stringify({ type: 'MOVE', id: selectedPiece, toX: x, toY: y }));
                 selectedPiece = null;
             }
@@ -588,7 +639,7 @@
                 if (selectedObj) {
                     for (let y = 0; y < 16; y++) {
                         for (let x = 0; x < 8; x++) {
-                            if (isValidMove(selectedObj, x, y, pieces)) {
+                            if (isValidMove(selectedObj, x, y, pieces) && visibleGrid[y][x] !== 'X') {
                                 const cell = getCell(x, y);
                                 const targetPiece = pieces.find(p => p.x === x && p.y === y);
                                 const indicator = document.createElement('div');
