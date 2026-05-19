@@ -1,7 +1,7 @@
 <br>
 
 <p align="center">
- <img src="https://raw.githubusercontent.com/ssambender/minesweeper-chess-frontend/refs/heads/main/favicon.png" alt="Minesweeper Chess Logo" height="165">
+ <img src="favicon.png" alt="Minesweeper Chess Logo" height="165">
 </p>
 
 <h3 align="center">Minesweeper Chess</h3>
